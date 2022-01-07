@@ -145,6 +145,10 @@
     };
   }
 
+  function isAsyncFunction(fn) {
+    return fn.constructor.name === "AsyncFunction"
+  }
+
   window.__bootstrap.util = {
     log,
     setLogDebug,
@@ -156,5 +160,6 @@
     nonEnumerable,
     readOnly,
     getterOnly,
+    isAsyncFunction
   };
 })(this);

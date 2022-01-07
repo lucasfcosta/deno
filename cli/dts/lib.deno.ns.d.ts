@@ -135,6 +135,14 @@ declare namespace Deno {
      * for example via a call to `Deno.exit`. Defaults to true. */
     sanitizeExit?: boolean;
 
+    /** Determines the test's timeout in milliseconds.
+     *
+     * This timeout can't prevent synchronous infinite loops.
+     *
+     * Defaults to 5000.
+     */
+    timeout?: number;
+
     /** Specifies the permissions that should be used to run the test.
      * Set this to "inherit" to keep the calling thread's permissions.
      * Set this to "none" to revoke all permissions.
@@ -329,6 +337,7 @@ declare namespace Deno {
   export function test(
     name: string,
     fn: (t: TestContext) => void | Promise<void>,
+    timeout?: number,
   ): void;
 
   /** Register a test which will be run when `deno test` is used on the command
@@ -349,7 +358,10 @@ declare namespace Deno {
    * });
    * ```
    */
-  export function test(fn: (t: TestContext) => void | Promise<void>): void;
+  export function test(
+    fn: (t: TestContext) => void | Promise<void>,
+    timeout?: number,
+  ): void;
 
   /** Register a test which will be run when `deno test` is used on the command
    * line and the containing module looks like a test module.

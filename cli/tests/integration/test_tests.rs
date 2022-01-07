@@ -185,6 +185,12 @@ itest!(finally_timeout {
   output: "test/finally_timeout.out",
 });
 
+itest!(async_test_timeout {
+  args: "test test/async_test_timeout.ts",
+  exit_code: 1,
+  output: "test/async_test_timeout.out",
+});
+
 itest!(unresolved_promise {
   args: "test test/unresolved_promise.ts",
   exit_code: 1,
