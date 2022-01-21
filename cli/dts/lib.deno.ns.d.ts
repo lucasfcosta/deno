@@ -137,11 +137,13 @@ declare namespace Deno {
 
     /** Determines the test's timeout in milliseconds.
      *
+     * Null can be used to disable a test's timeout,
+     *
      * This timeout can't prevent synchronous infinite loops.
      *
      * Defaults to 5000.
      */
-    timeout?: number;
+    timeout?: number | null;
 
     /** Specifies the permissions that should be used to run the test.
      * Set this to "inherit" to keep the calling thread's permissions.

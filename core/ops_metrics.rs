@@ -21,6 +21,7 @@ pub struct OpMetrics {
   pub bytes_sent_control: u64,
   pub bytes_sent_data: u64,
   pub bytes_received: u64,
+  pub promise_ids: Vec<i32>,
 }
 
 // TODO(@AaronO): track errors
@@ -75,15 +76,30 @@ impl OpsTracker {
     metrics.ops_completed_sync += 1;
   }
 
-  pub fn track_async(&self, id: OpId) {
+  pub fn track_async(&self, id: OpId, promise_id: i32) {
     let metrics = &mut self.metrics_mut(id);
     metrics.ops_dispatched += 1;
     metrics.ops_dispatched_async += 1;
+    metrics.promise_ids.push(promise_id);
   }
 
-  pub fn track_async_completed(&self, id: OpId) {
+  pub fn track_async_completed(&self, id: OpId, promise_id: i32) {
     let metrics = &mut self.metrics_mut(id);
     metrics.ops_completed += 1;
     metrics.ops_completed_async += 1;
+    metrics.promise_ids.retain(|&p| p != promise_id);
+  }
+
+  pub fn track_async_unrefed(&self, id: OpId, promise_id: i32) {
+    let metrics = &mut self.metrics_mut(id);
+    metrics.ops_dispatched_async_unref += 1;
+    metrics.promise_ids.retain(|&p| p != promise_id);
+  }
+
+  pub fn track_async_completed_unrefed(&self, id: OpId, promise_id: i32) {
+    let metrics = &mut self.metrics_mut(id);
+    self.track_async_completed(id, promise_id);
+    metrics.ops_completed_async_unref += 1;
+    metrics.promise_ids.retain(|&p| p != promise_id);
   }
 }

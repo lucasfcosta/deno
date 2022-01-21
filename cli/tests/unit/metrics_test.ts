@@ -40,7 +40,7 @@ Deno.test(async function metrics() {
 });
 
 Deno.test(
-  { permissions: { write: true } },
+  { timeout: null, permissions: { write: true } },
   function metricsUpdatedIfNoResponseSync() {
     const filename = Deno.makeTempDirSync() + "/test.txt";
 
@@ -54,7 +54,7 @@ Deno.test(
 );
 
 Deno.test(
-  { permissions: { write: true } },
+  { timeout: null, permissions: { write: true } },
   async function metricsUpdatedIfNoResponseAsync() {
     const filename = Deno.makeTempDirSync() + "/test.txt";
 

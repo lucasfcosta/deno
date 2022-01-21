@@ -29,6 +29,7 @@
     RegExpPrototypeTest,
     SymbolToStringTag,
   } = window.__bootstrap.primordials;
+  const { unrefTimer } = window.__bootstrap.timers;
   let testStepsEnabled = false;
 
   const opSanitizerDelayResolveQueue = [];
@@ -86,14 +87,15 @@
 
       const details = [];
       for (const key in post.ops) {
-        const dispatchedDiff = Number(
-          post.ops[key]?.opsDispatchedAsync -
-            (pre.ops[key]?.opsDispatchedAsync ?? 0),
-        );
-        const completedDiff = Number(
-          post.ops[key]?.opsCompletedAsync -
-            (pre.ops[key]?.opsCompletedAsync ?? 0),
-        );
+        const dispatchedAsyncAfter = (post.ops[key]?.opsDispatchedAsync + post.ops[key]?.opsDispatchedAsyncUnref);
+        const dispatchedAsyncBefore = (pre.ops[key]?.opsDispatchedAsync ?? 0) + (pre.ops[key]?.opsDispatchedAsyncUnref ?? 0);
+
+        const dispatchedDiff = Number(dispatchedAsyncAfter - dispatchedAsyncBefore);
+
+        const completedAsyncAfter = (post.ops[key]?.opsCompletedAsync + post.ops[key]?.opsCompletedAsyncUnref);
+        const completedAsyncBefore = (pre.ops[key]?.opsCompletedAsync ?? 0) + (pre.ops[key]?.opsCompletedAsyncUnref ?? 0);
+
+        const completedDiff = Number(completedAsyncAfter - completedAsyncBefore);
 
         if (dispatchedDiff !== completedDiff) {
           details.push(`
@@ -413,20 +415,24 @@ finishing test case.`;
   }
 
   function wrapTestFnWithTimeout(fn, timeout) {
-    if (!isAsyncFunction(fn)) return fn;
+    if (timeout === null || !isAsyncFunction(fn)) return fn;
 
-    return function testWithTimeout() {
+    return function testWithTimeout(...args) {
+      const runAndClearTimeout = async (timeoutHandle) => {
+        try {
+          await fn(...args);
+        } finally {
+          clearTimeout(timeoutHandle);
+          // unrefTimer(timeoutHandle);
+        }
+      }
+
       return new Promise((resolve, reject) => {
         const timeoutHandle = setTimeout(() => {
           reject(new Error(`Test took longer than the ${timeout}ms timeout.`))
         }, timeout)
 
-        fn()
-          .then(resolve)
-          .catch(reject)
-          .finally(() => {
-            clearTimeout(timeoutHandle);
-          });
+        runAndClearTimeout(timeoutHandle).then(resolve);
       });
     }
   }

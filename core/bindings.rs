@@ -587,7 +587,11 @@ fn opcall_async<'s>(
       OpResult::Err(_) => rv.set(result.to_v8(scope).unwrap()),
     },
     Op::Async(fut) => {
-      state.op_state.borrow().tracker.track_async(op_id);
+      state
+        .op_state
+        .borrow()
+        .tracker
+        .track_async(op_id, promise_id);
       state.pending_ops.push(fut);
       state.have_unpolled_ops = true;
     }
@@ -639,6 +643,30 @@ fn unref_op<'s>(
   };
 
   state.unrefed_ops.insert(promise_id);
+
+  let op_id = match state
+    .op_state
+    .borrow()
+    .tracker
+    .per_op()
+    .iter()
+    .position(|op| op.promise_ids.contains(&promise_id))
+  {
+    Some(op_id) => op_id,
+    None => {
+      throw_type_error(
+        scope,
+        format!("promise id not referenced: {}", promise_id),
+      );
+      return;
+    }
+  };
+
+  state
+    .op_state
+    .borrow()
+    .tracker
+    .track_async_unrefed(op_id, promise_id);
 }
 
 fn has_tick_scheduled(
